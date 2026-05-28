@@ -1,0 +1,18 @@
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: wordpress-vpa
+  namespace: dev
+spec:
+  targetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: wordpress
+
+  updatePolicy:
+    updateMode: "Off"
+
+  resourcePolicy:
+    containerPolicies:
+      - containerName: wordpress
+        controlledResources: ["cpu", "memory"]

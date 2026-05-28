@@ -1,0 +1,11 @@
+🌍 Ingress Labs
+
+Os manifests em ingress-labs/ foram utilizados durante estudos iniciais sobre:
+
+Ingress
+roteamento HTTP
+Traefik
+NGINX Ingress Controller
+
+O objetivo desses testes foi entender como o Kubernetes consegue expor aplicações HTTP utilizando regras de roteamento baseadas em domínio/host.
+
