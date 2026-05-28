@@ -8,6 +8,7 @@ MySQL, autoscaling, monitoramento, observabilidade e health checks.
 Arquitetura
 
 Browser → Port Forward / Ingress → Service WordPress → Pods WordPress → Service MySQL → Pod MySQL
+
 Tecnologias utilizadas
 - Kubernetes
 - K3d / K3s
