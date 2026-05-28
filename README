@@ -1,11 +1,106 @@
-🌍 Ingress Labs
+Objetivo
 
-Os manifests em ingress-labs/ foram utilizados durante estudos iniciais sobre:
+O objetivo deste projeto foi construir uma arquitetura Kubernetes funcional e evoluir gradualmente em conceitos de
+cloud-native e DevOps.
+O laboratório começou com estudos básicos de Ingress e evoluiu para um ambiente completo com WordPress,
+MySQL, autoscaling, monitoramento, observabilidade e health checks.
 
-Ingress
-roteamento HTTP
-Traefik
-NGINX Ingress Controller
+Arquitetura
 
-O objetivo desses testes foi entender como o Kubernetes consegue expor aplicações HTTP utilizando regras de roteamento baseadas em domínio/host.
+Browser → Port Forward / Ingress → Service WordPress → Pods WordPress → Service MySQL → Pod MySQL
+Tecnologias utilizadas
+- Kubernetes
+- K3d / K3s
+- kubectl
+- Helm
+- WordPress
+- MySQL
+- Prometheus
+- Grafana
+- HPA
+- VPA
 
+Services
+
+Foram utilizados Services do tipo ClusterIP para permitir comunicação interna entre os pods.
+Exemplo:
+WordPress → mysql:3306
+Mesmo que o Pod do MySQL seja recriado e tenha seu IP alterado, a comunicação continua funcionando através do
+Service.
+
+Secrets e ConfigMaps
+
+As credenciais do WordPress e MySQL foram externalizadas utilizando Kubernetes Secrets.
+Configurações não sensíveis foram separadas utilizando ConfigMaps.
+
+Health Checks
+
+Readiness Probe:
+Verifica se a aplicação está pronta para receber tráfego.
+
+Liveness Probe:
+Verifica se a aplicação continua saudável após iniciar.
+
+Caso o container pare de responder, o Kubernetes reinicia automaticamente.
+
+HPA — Horizontal Pod Autoscaler
+
+Foi configurado HPA para escalar horizontalmente os pods do WordPress com base no uso de CPU.
+
+Durante os testes:
+1 pod → 3 pods
+Após redução da carga:
+3 pods → 1 pod
+
+VPA — Vertical Pod Autoscaler
+
+Foi utilizado VPA para análise e recomendação de recursos.
+
+Modo utilizado:
+UpdateMode: Off
+Nesse modo o VPA apenas recomenda recursos sem alterar automaticamente os pods.
+
+Observabilidade
+
+Monitoramento implementado utilizando Prometheus e Grafana.
+
+O Grafana foi utilizado para visualizar:
+- uso de CPU
+- uso de memória
+- requests/limits
+- comportamento do HPA
+- pods em tempo real
+
+Ingress Labs
+Os manifests dentro de ingress/ foram utilizados para estudos de:
+- Ingress
+- roteamento HTTP
+- Traefik
+- NGINX Ingress Controller
+Esses manifests representam a evolução inicial do aprendizado antes da arquitetura principal WordPress + MySQL.
+
+Como subir o ambiente
+
+1. Subir cluster K3d:
+k3d cluster start lab-k8s
+
+2. Aplicar manifests:
+kubectl apply -f namespace/
+kubectl apply -R -f configmap/
+kubectl apply -R -f mysql/
+kubectl apply -R -f wordpress/
+kubectl apply -R -f ingress/
+
+Validação
+
+Ver pods:
+kubectl get pods -n dev
+
+Ver services:
+kubectl get svc -n dev
+
+Ver HPA:
+kubectl get hpa -n dev
+
+Ver VPA:
+kubectl get vpa -n dev
