@@ -105,3 +105,90 @@ kubectl get hpa -n dev
 
 Ver VPA:
 kubectl get vpa -n dev
+
+Segmentação de Tráfego com Kubernetes
+
+O objetivo deste desafio foi separar o tráfego administrativo e público da aplicação utilizando recursos nativos do Kubernetes.
+
+Para isso, foram criados dois Deployments independentes:
+
+### WordPress Frontend
+
+Responsável pelo tráfego público da aplicação.
+
+* Deployment: `wordpress-frontend`
+* Réplicas: `4 Pods`
+* Service: `wordpress-frontend`
+
+### WordPress Admin
+
+Responsável pelo acesso administrativo da aplicação.
+
+* Deployment: `wordpress-admin`
+* Réplicas: `1 Pod`
+* Service: `wordpress-admin`
+
+---
+
+### Roteamento com Ingress (Traefik)
+
+Foi configurado um Ingress utilizando o Traefik para realizar o roteamento baseado em hostname.
+
+```text
+admin.seusite.com.br
+        ↓
+wordpress-admin Service
+        ↓
+1 Pod WordPress
+
+seusite.com.br
+        ↓
+wordpress-frontend Service
+        ↓
+4 Pods WordPress
+```
+
+---
+
+### Como os Services encontram os Pods
+
+Cada Service utiliza labels e selectors para localizar automaticamente os Pods correspondentes.
+
+Exemplo:
+
+```yaml
+selector:
+  app: wordpress-frontend
+```
+
+O Kubernetes identifica todos os Pods com essa label e cria automaticamente os Endpoints do Service.
+
+---
+
+### Endpoints
+
+Os Endpoints representam os Pods disponíveis atrás de um Service.
+
+Exemplo:
+
+```text
+wordpress-frontend
+├── 10.42.2.69:80
+├── 10.42.2.70:80
+├── 10.42.2.71:80
+└── 10.42.2.72:80
+```
+
+Esses Endpoints são utilizados pelo Kubernetes para distribuir as requisições entre os Pods do frontend.
+
+---
+
+### Resultado
+
+Com essa arquitetura foi possível:
+
+* Separar o tráfego administrativo do tráfego público.
+* Escalar o frontend independentemente da área administrativa.
+* Implementar roteamento baseado em hostname utilizando Ingress e Traefik.
+* Demonstrar a comunicação entre Deployments, Services, Endpoints e Ingress dentro do Kubernetes.
+
