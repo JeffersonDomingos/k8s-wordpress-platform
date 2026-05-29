@@ -1,112 +1,326 @@
-Objetivo
+# Objetivo
 
-O objetivo deste projeto foi construir uma arquitetura Kubernetes funcional e evoluir gradualmente em conceitos de
-cloud-native e DevOps.
-O laboratório começou com estudos básicos de Ingress e evoluiu para um ambiente completo com WordPress,
-MySQL, autoscaling, monitoramento, observabilidade e health checks.
+O objetivo deste projeto foi construir uma arquitetura Kubernetes funcional e evoluir gradualmente em conceitos de Cloud Native e DevOps.
 
-Arquitetura
+O laboratório começou com estudos básicos de Ingress e evoluiu para um ambiente completo contendo:
 
-Browser → Port Forward / Ingress → Service WordPress → Pods WordPress → Service MySQL → Pod MySQL
+* WordPress
+* MySQL
+* Autoscaling Horizontal (HPA)
+* Autoscaling Vertical (VPA)
+* Monitoramento com Prometheus
+* Observabilidade com Grafana
+* Health Checks
+* Segmentação de tráfego utilizando Ingress
 
-Tecnologias utilizadas
-- Kubernetes
-- K3d / K3s
-- kubectl
-- Helm
-- WordPress
-- MySQL
-- Prometheus
-- Grafana
-- HPA
-- VPA
+---
 
-Services
+# Arquitetura
 
-Foram utilizados Services do tipo ClusterIP para permitir comunicação interna entre os pods.
+```text
+Browser
+    │
+    ▼
+Port Forward / Ingress (Traefik)
+    │
+    ▼
+Service WordPress
+    │
+    ▼
+Pods WordPress
+    │
+    ▼
+Service MySQL
+    │
+    ▼
+Pod MySQL
+```
+
+---
+
+# Tecnologias Utilizadas
+
+* Kubernetes
+* K3d / K3s
+* kubectl
+* Helm
+* WordPress
+* MySQL
+* Prometheus
+* Grafana
+* Horizontal Pod Autoscaler (HPA)
+* Vertical Pod Autoscaler (VPA)
+
+---
+
+# Services
+
+Foram utilizados Services do tipo `ClusterIP` para permitir a comunicação interna entre os componentes da aplicação.
+
 Exemplo:
+
+```text
 WordPress → mysql:3306
-Mesmo que o Pod do MySQL seja recriado e tenha seu IP alterado, a comunicação continua funcionando através do
-Service.
+```
 
-Secrets e ConfigMaps
+Mesmo que o Pod do MySQL seja recriado e receba um novo endereço IP, a comunicação continua funcionando através do Service.
 
-As credenciais do WordPress e MySQL foram externalizadas utilizando Kubernetes Secrets.
-Configurações não sensíveis foram separadas utilizando ConfigMaps.
+---
 
-Health Checks
+# Secrets e ConfigMaps
 
-Readiness Probe:
-Verifica se a aplicação está pronta para receber tráfego.
+As credenciais da aplicação foram externalizadas utilizando Kubernetes Secrets.
 
-Liveness Probe:
-Verifica se a aplicação continua saudável após iniciar.
+### Secrets
 
-Caso o container pare de responder, o Kubernetes reinicia automaticamente.
+Responsáveis por armazenar informações sensíveis:
 
-HPA — Horizontal Pod Autoscaler
+* Usuário do banco
+* Senha do banco
+* Credenciais do WordPress
 
-Foi configurado HPA para escalar horizontalmente os pods do WordPress com base no uso de CPU.
+### ConfigMaps
 
-Durante os testes:
-1 pod → 3 pods
-Após redução da carga:
-3 pods → 1 pod
+Responsáveis por armazenar configurações não sensíveis:
 
-VPA — Vertical Pod Autoscaler
+* Nome da aplicação
+* Ambiente
+* Configurações gerais
+
+---
+
+# Health Checks
+
+Foram implementadas estratégias de verificação de saúde da aplicação.
+
+## Readiness Probe
+
+Responsável por verificar se a aplicação está pronta para receber tráfego.
+
+Enquanto a aplicação não estiver pronta, o Kubernetes não encaminha requisições para o Pod.
+
+## Liveness Probe
+
+Responsável por verificar se a aplicação continua saudável após a inicialização.
+
+Caso o container pare de responder, o Kubernetes realiza a reinicialização automática.
+
+---
+
+# HPA — Horizontal Pod Autoscaler
+
+Foi configurado um HPA para escalar horizontalmente os Pods do WordPress com base na utilização de CPU.
+
+Durante os testes foi possível observar:
+
+```text
+1 Pod → 3 Pods
+```
+
+Após a redução da carga:
+
+```text
+3 Pods → 1 Pod
+```
+
+Demonstrando a capacidade de escalabilidade automática da aplicação.
+
+---
+
+# VPA — Vertical Pod Autoscaler
 
 Foi utilizado VPA para análise e recomendação de recursos.
 
-Modo utilizado:
-UpdateMode: Off
-Nesse modo o VPA apenas recomenda recursos sem alterar automaticamente os pods.
+Modo configurado:
 
-Observabilidade
+```yaml
+updateMode: "Off"
+```
 
-Monitoramento implementado utilizando Prometheus e Grafana.
+Neste modo o VPA não altera automaticamente os Pods.
 
-O Grafana foi utilizado para visualizar:
-- uso de CPU
-- uso de memória
-- requests/limits
-- comportamento do HPA
-- pods em tempo real
+Seu objetivo é fornecer recomendações de:
 
-Ingress Labs
-Os manifests dentro de ingress/ foram utilizados para estudos de:
-- Ingress
-- roteamento HTTP
-- Traefik
-- NGINX Ingress Controller
-Esses manifests representam a evolução inicial do aprendizado antes da arquitetura principal WordPress + MySQL.
+* CPU
+* Memória
 
-Como subir o ambiente
+permitindo ajustes manuais mais precisos.
 
-1. Subir cluster K3d:
+---
+
+# Observabilidade
+
+O monitoramento foi implementado utilizando Prometheus e Grafana.
+
+## Prometheus
+
+Responsável pela coleta das métricas do cluster e das aplicações.
+
+## Grafana
+
+Responsável pela visualização das métricas através de dashboards.
+
+Foi possível acompanhar:
+
+* Utilização de CPU
+* Utilização de memória
+* Requests e Limits
+* Comportamento do HPA
+* Estado dos Pods em tempo real
+
+---
+
+# Segmentação de Tráfego com Ingress
+
+Como evolução do laboratório, foi implementada uma arquitetura com separação entre tráfego administrativo e tráfego público.
+
+## WordPress Frontend
+
+Deployment responsável pelo tráfego público.
+
+* Deployment: `wordpress-frontend`
+* Réplicas: `4 Pods`
+* Service: `wordpress-frontend`
+
+Host configurado:
+
+```text
+seusite.com.br
+```
+
+## WordPress Admin
+
+Deployment responsável pelo tráfego administrativo.
+
+* Deployment: `wordpress-admin`
+* Réplicas: `1 Pod`
+* Service: `wordpress-admin`
+
+Host configurado:
+
+```text
+admin.seusite.com.br
+```
+
+---
+
+## Fluxo de Roteamento
+
+```text
+admin.seusite.com.br
+        ↓
+Traefik Ingress
+        ↓
+wordpress-admin Service
+        ↓
+1 Pod WordPress
+
+seusite.com.br
+        ↓
+Traefik Ingress
+        ↓
+wordpress-frontend Service
+        ↓
+4 Pods WordPress
+```
+
+---
+
+## Endpoints
+
+Os Endpoints são criados automaticamente pelo Kubernetes a partir dos Selectors dos Services.
+
+Exemplo:
+
+```text
+wordpress-frontend
+├── 10.42.2.69:80
+├── 10.42.2.70:80
+├── 10.42.2.71:80
+└── 10.42.2.72:80
+```
+
+Esses Endpoints representam os Pods disponíveis atrás do Service e são utilizados para distribuição das requisições.
+
+---
+
+# Ingress Labs
+
+Os manifests presentes no diretório `ingress/` foram utilizados inicialmente para estudos de:
+
+* Ingress
+* Roteamento HTTP
+* Traefik
+* NGINX Ingress Controller
+
+Esses manifests representam a evolução inicial do aprendizado antes da implementação da arquitetura principal baseada em WordPress e MySQL.
+
+---
+
+# Como Subir o Ambiente
+
+## 1. Iniciar o Cluster
+
+```bash
 k3d cluster start lab-k8s
+```
 
-2. Aplicar manifests:
+## 2. Aplicar os Manifests
+
+```bash
 kubectl apply -f namespace/
+
 kubectl apply -R -f configmap/
+
 kubectl apply -R -f mysql/
+
 kubectl apply -R -f wordpress/
+
 kubectl apply -R -f ingress/
+```
 
-Validação
+---
 
-Ver pods:
+# Validação
+
+## Verificar Pods
+
+```bash
 kubectl get pods -n dev
+```
 
-Ver services:
+## Verificar Services
+
+```bash
 kubectl get svc -n dev
+```
 
-Ver HPA:
+## Verificar HPA
+
+```bash
 kubectl get hpa -n dev
+```
 
-Ver VPA:
+## Verificar VPA
+
+```bash
 kubectl get vpa -n dev
+```
 
-Segmentação de Tráfego com Kubernetes
+## Verificar Ingress
+
+```bash
+kubectl get ingress -n dev
+```
+
+## Verificar Endpoints
+
+```bash
+kubectl get endpoints -n dev
+```
+
+
+### Segmentação de Tráfego com Kubernetes
 
 O objetivo deste desafio foi separar o tráfego administrativo e público da aplicação utilizando recursos nativos do Kubernetes.
 
