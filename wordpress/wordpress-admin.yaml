@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress-admin
+  namespace: dev
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: wordpress-admin
+
+  template:
+    metadata:
+      labels:
+        app: wordpress-admin
+
+    spec:
+      containers:
+        - name: wordpress
+          image: wordpress:latest
+
+          env:
+            - name: WORDPRESS_DB_HOST
+              value: mysql:3306
+
+          envFrom:
+            - secretRef:
+                name: wordpress-secret
+
+          ports:
+            - containerPort: 80
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
