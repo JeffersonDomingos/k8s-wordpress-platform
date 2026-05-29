@@ -8,7 +8,7 @@ metadata:
 spec:
   rules:
 
-  - host: admin.local
+  - host: admin.seusite.com.br
     http:
       paths:
       - path: /
@@ -19,7 +19,7 @@ spec:
             port:
               number: 80
 
-  - host: site.local
+  - host: seusite.com.br
     http:
       paths:
       - path: /
